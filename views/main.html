@@ -1,0 +1,136 @@
+{% extends 'layout.html' %} {% block content %}
+<div class="timeline">
+  {% if user %}
+  <div>
+    <!-- multipart form-data 시작하는 부분 -->
+    <form id="twit-form" action="/post" method="post" enctype="multipart/form-data">
+      <div class="input-group">
+        <textarea id="twit" name="content" maxlength="140"></textarea>
+      </div>
+      <div class="img-preview">
+        <img
+          id="img-preview"
+          src=""
+          style="display: none"
+          width="250"
+          alt="미리보기"
+        />
+        <!-- hidden태그를 여기 쓴 이유는 변경되어서는 안되고 form태그로 POST /post로 값을 전달하기 위함이다. -->
+        <input id="img-url" type="hidden" name="url" />
+      </div>
+      <div>
+        <label id="img-label" for="img">사진 업로드</label>
+        <input id="img" type="file" accept="image/*" />
+
+        <button id="twit-btn" type="submit" class="btn">짹짹</button>
+      </div>
+    </form>
+    <!-- .. -->
+  </div>
+  {% endif %}
+  <div class="twits">
+    <form id="hashtag-form" action="/hashtag" method="GET">
+      <input type="text" name="hashtag" placeholder="태그 검색 하세요" />
+      <button class="btn">검색</button>
+    </form>
+    <!--twit.id에 해당 twit의 아이디가 존재 할 것이다.-->
+    {% for twit in twits %}
+    <div class="twit">
+      <input type="hidden" value="{{twit.User.id}}" class="twit-user-id" />
+      <input type="hidden" value="{{twit.id}}" class="twit-id" />
+      <div class="twit-author">{{twit.User.nick}}</div>
+      {% if user.id === twit.User.id %}
+      <button class="twit-delete twit-follow">삭제하기</button>
+      {% endif %}
+      <!-- followerIdList에 해당 twit의 유저 id가 없고 자신이 올린 트윗이 아니라면 팔로우 하기 라는 버튼을 보여준다-->
+      {% if not followerIdList.includes(twit.User.id) and twit.User.id !== user.id %}
+      <button class="twit-follow">팔로우하기</button>
+      {% endif %}
+
+      <!--또한 twit.content도 보여준다 -->
+      <div class="twit-content">{{twit.content}}</div>
+      {% if twit.img %}
+      <div class="twit-img"><img src="{{twit.img}}" alt="twit 섬네일" /></div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+<!-- script가 존재하는 곳 -->
+{% block script %}
+<script>
+  if (document.getElementById("img")) {
+    /**
+     * id="img"인 dom객체를 찾아서 만약 이 객체가 바뀌게 되면 POST /post/img를 호출하게 된다.
+     *
+     */
+    document.getElementById("img").addEventListener("change", function (e) {
+      const formData = new FormData();
+      console.log(this, this.files);
+      formData.append("img", this.files[0]);
+      axios
+        .post("/post/img", formData)
+        /**
+         * formData에
+         * img 으로 fileData를 집어 넣어 준다.
+         * 이렇게 전송된 fileData는 POST /post/img에서 처리해 주어
+         * req.file에 저장해 준다.
+         */
+        .then((res) => {
+          document.getElementById("img-url").value = res.data.url;
+          document.getElementById("img-preview").src = res.data.url;
+          document.getElementById("img-preview").style.display = "inline";
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+    });
+  }
+  /**
+   * 팔로우하기 버튼을 클릭
+   */
+  document.querySelectorAll(".twit-follow").forEach(function (tag) {
+    tag.addEventListener("click", function () {
+      /* 현재 사용자의 id를 가리키는 dom객체 */
+      const myId = document.querySelector("#my-id");
+      if (myId) {
+        /* tag의 부모노드로 올라가서 각각 twit ( post )의 userid를 저장한다. */
+        const userId = tag.parentNode.querySelector(".twit-user-id").value;
+        /* 당연히 팔로우 하고자 하는 상대방과 id가 달라야만 진행될 것이다. */
+        if (userId !== myId.value) {
+          if (confirm("팔로잉하시겠습니까?")) {
+            axios
+              /* POST /user/userId/follow 진행 */
+              .post(`/user/${userId}/follow`)
+              .then(() => {
+                location.reload();
+              })
+              .catch((err) => {
+                console.error(err);
+              });
+          }
+        }
+      }
+    });
+  });
+  document.querySelectorAll(".twit-delete").forEach(function (tag) {
+    tag.addEventListener("click", function () {
+      /**
+       * twitId에 해당 twit의 아이디를 가져온다
+       * => 그 후 삭제하는 과정을 거쳐준다.
+       */
+      const twitId = tag.parentNode.querySelector(".twit-id").value;
+      if (confirm("삭제하시겠습니까?")) {
+        axios
+          .delete(`/post/${twitId}/delete`)
+          .then(() => location.reload())
+          .catch((err) => {
+            console.error(err);
+          });
+      }
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,36 @@
+{
+    "config": {
+        "target": "http://localhost:8001",
+        "phases": [
+            {
+                "duration": 60,
+                "arrivalRate": 30
+            }
+        ]
+    },
+    "scenarios": [
+        {
+            "flow": [
+                {
+                    "get": {
+                        "url": "/"
+                    }
+                },
+                {
+                    "post": {
+                        "url": "/auth/login",
+                        "json": {
+                            "email": "heart20021010@gmail.com",
+                            "password": "gustj486!!"
+                        }
+                    }
+                },
+                {
+                    "get": {
+                        "url": "/hashtag?hashtag=test"
+                    }
+                }
+            ]
+        }
+    ]
+}
