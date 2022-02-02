@@ -76,10 +76,10 @@ const upload = multer({
     static 미들웨어가 /img경로의 정적 파일을 제공하므로 클라이언트에서 업로드한 이미지에 접근할 수 있습니다.
 */
 router.post("/img", isLoggedIn, upload.single("img"), (req, res) => {
-  console.log("req", req);
   console.log("req.file", req.file);
-  console.log("req.file", req.file.location);
-  res.json({ url: req.file.location });
+  const originalUrl = req.file.locaiton;
+  const url = originalUrl.replace(/\/original\//, "/thumb");
+  res.json({ url, originalUrl });
 });
 
 const upload2 = multer();

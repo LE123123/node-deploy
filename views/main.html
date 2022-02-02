@@ -50,7 +50,13 @@
       <!--또한 twit.content도 보여준다 -->
       <div class="twit-content">{{twit.content}}</div>
       {% if twit.img %}
-      <div class="twit-img"><img src="{{twit.img}}" alt="twit 섬네일" /></div>
+      <div class="twit-img">
+        <img
+          src="{{twit.img}}"
+          alt="섬네일"
+          onerror="this.src = this.src.replace(/\/thumb\//, '/original/');"
+        />
+      </div>
       {% endif %}
     </div>
     {% endfor %}
@@ -80,7 +86,12 @@
          */
         .then((res) => {
           document.getElementById("img-url").value = res.data.url;
-          document.getElementById("img-preview").src = res.data.url;
+          /**
+           * 만약에 url에 해당하는 resizing 경로가 없다면
+           * res.data.originalUrl으로 s3에 처음에 저장되는 경로를 써준다
+           * < s3 /thumb에 저장되기 전에는 /original에 저장된 이미지를 보여준다. >
+           */
+          document.getElementById("img-preview").src = res.data.originalUrl;
           document.getElementById("img-preview").style.display = "inline";
         })
         .catch((err) => {
