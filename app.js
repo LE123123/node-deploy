@@ -171,6 +171,7 @@ const passport = require("passport");
 const helmet = require("helmet");
 const hpp = require("hpp");
 const redis = require("redis");
+const favicon = require("serve-favicon");
 const RedisStore = require("connect-redis")(session);
 
 dotenv.config();
@@ -203,6 +204,8 @@ sequelize
   .catch((err) => {
     console.error(err);
   });
+
+app.use(favicon(path.join(__dirname, "public", "favicon.ico")));
 
 if (process.env.NODE_ENV === "production") {
   app.enable("trust proxy");

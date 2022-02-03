@@ -37,6 +37,7 @@
     "sanitize-html": "^2.6.1",
     "sequelize": "^6.12.4",
     "sequelize-cli": "^6.3.0",
+    "serve-favicon": "^2.5.0",
     "winston": "^3.5.0"
   },
   "devDependencies": {
