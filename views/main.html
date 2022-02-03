@@ -14,6 +14,7 @@
           style="display: none"
           width="250"
           alt="미리보기"
+          crossorigin
         />
         <!-- hidden태그를 여기 쓴 이유는 변경되어서는 안되고 form태그로 POST /post로 값을 전달하기 위함이다. -->
         <input id="img-url" type="hidden" name="url" />
@@ -55,6 +56,7 @@
           src="{{twit.img}}"
           alt="섬네일"
           onerror="this.src = this.src.replace(/\/thumb\//, '/original/');"
+          crossorigin
         />
       </div>
       {% endif %}
