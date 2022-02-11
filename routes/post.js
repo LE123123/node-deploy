@@ -8,6 +8,7 @@ const axios = require("axios");
 
 const { Post, Hashtag, User } = require("../models");
 const { isLoggedIn } = require("./middlewares");
+const { sequelize } = require("../models/user");
 
 const router = express.Router();
 
@@ -128,7 +129,48 @@ router.post("/", isLoggedIn, upload2.none(), async (req, res, next) => {
 router.delete("/:postId/delete", async (req, res, next) => {
   try {
     await Post.destroy({ where: { id: req.params.postId } });
-    res.status(302).send("success");
+    res.status(200).send("success");
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.post("/:postId/love", async (req, res, next) => {
+  try {
+    const currentUser = await User.findOne({
+      where: {
+        id: res.locals.user.id,
+      },
+    });
+    /**
+     * 현재 유저에 해당 postId에 해당하는 post에 좋아요를 표시하는 행동
+     */
+    await currentUser.addLovedPostList(req.params.postId);
+    res.status(200).send("success adding love from post");
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.post("/:postId/deleteLove", async (req, res, next) => {
+  try {
+    /**
+     * 삭제하는것은 어렵지 않다 그냥 관계되어있는 것을 destroy하면 되기 때문
+     */
+    // const currentUser = await User.findOne({
+    //   where: {
+    //     id: res.locals.user.id,
+    //   },
+    // });
+
+    await sequelize.query(
+      `delete from PostLoveUser where 
+          userId = ${res.locals.user.id} AND 
+          postID = ${req.params.postId}`
+    );
+    res.status(200).send("success delete love from post");
   } catch (error) {
     console.error(error);
     next(error);

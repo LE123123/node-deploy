@@ -1,0 +1,145 @@
+{% extends 'layout.html' %}
+<!--prettier-ignore-->
+<!--/chat nsp-->
+{% block content %}
+<div id="chatcontainer">
+  <fieldset>
+    <legend>채팅 내용</legend>
+    <div id="chat-list">
+      <!--모든 채팅 내역-->
+      <!--chat.UserId ( 채팅을 친 유저 )-->
+      <!--room.UserId ( 방의 주인 ) -->
+      {% for chat in chats %}
+      <!--만약 채팅의 주인이 방 주인이라면-->
+      {% if chat.UserId === user.id %}
+      <!--TODO: 스타일 설정-->
+      <div class="mine" style="">
+        <!--TODO: userId를 user의 Nick으로 바꾸어주는 과정 진행해야 함-->
+        <div style="color: {{chat.owner}}">{{chat.chatUserNick}}</div>
+        <!--gif와 chat중에 둘중 하나 있는거만 화면에 보여준다.-->
+        {% if chat.gif %}
+        <img src="/gif/{{chat.gif}}" />
+        {% else %}
+        <div>{{chat.chat}}</div>
+        {% endif %}
+      </div>
+      <!--system 채팅은 UserId를 0으로 설정-->
+      {% elif chat.UserId === 0 %}
+      <div class="system">
+        <!--system 채팅은 gif없음-->
+        <div>{{chat.chat}}</div>
+      </div>
+      {% else %}
+      <!--TODO: 스타일 설정-->
+      <div class="other" style="">
+        <div style="color: {{chat.owner}}">{{chat.chatUserNick}}</div>
+        {% if chat.gif %}
+        <img src="/gif/{{chat.gif}}" />
+        {% else %}
+        <div>{{chat.chat}}</div>
+        {% endif %}
+      </div>
+      {% endif %} {% endfor%}
+    </div>
+  </fieldset>
+  <div class="selectBar">
+    <i class="fa-solid fa-face-smile"></i>
+  </div>
+  <form id="chat-form" method="post" enctype="multipart/form-data">
+    <label for="gif">GIF 올리기</label>
+    <input type="file" id="gif" name="gif" accept="image/gif" />
+    <input type="text" id="chat" name="chat" />
+    <button type="submit">전송</button>
+  </form>
+</div>
+
+{% endblock %} {% block script %}
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io.connect("http://localhost:8001/chat", {
+    path: "/socket.io",
+  });
+
+  // TODO: 일단 어떤 상대방이 들어왔을 떄 처리해 줄 리스너가 필요함 ( join )
+  socket.on("join", (data) => {
+    const div = document.createElement("div");
+    div.classList.add("system");
+    const chat = document.createElement("div");
+    chat.textContent = data.chat;
+    div.appendChild(chat);
+    document.querySelector("#chat-list").appendChild(div);
+  });
+
+  // TODO: 일단 어떤 상대방이 나갈 떄 처리해 줄 리스너가 필요함 ( exit )
+  socket.on("exit", (data) => {
+    const div = document.createElement("div");
+    div.classList.add("system");
+    const chat = document.createElement("div");
+    chat.textContent = data.chat;
+    div.appendChild(chat);
+    document.querySelector("#chat-list").appendChild(div);
+  });
+
+  // TODO: 또한 어떤 상대방이 채팅 쳤을 떄 처리해 줄 리스너가 필요함 chat
+  socket.on("chat", (data) => {
+    const div = document.createElement("div");
+    if (parseInt(data.UserId, 10) === parseInt("{{user.id}}", 10)) {
+      div.classList.add("mine");
+    } else {
+      div.classList.add("other");
+    }
+
+    const name = document.createElement("div");
+    name.textContent = data.Owner;
+    name.style.color = data.OwnerStyle;
+    div.appendChild(name);
+
+    if (data.chat) {
+      const chat = document.createElement("div");
+      chat.textContent = data.chat;
+      div.appendChild(chat);
+    } else {
+      const gif = document.createElement("img");
+      gif.src = "/gif/" + data.gif;
+      div.appendChild(gif);
+    }
+
+    // div.style.color = ""
+    document.querySelector("#chat-list").appendChild(div);
+  });
+
+  document.querySelector("#chat-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    // 채팅이 있는 경우에만
+    if (e.target.chat.value) {
+      axios
+        .post("/room/{{room._id}}/chat", {
+          chat: this.chat.value,
+        })
+        .then(() => {
+          e.target.chat.value = "";
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+      // 채팅이 없으면 채팅치라고 TODO: 커서 갖다 대는것도 구현해보자
+    } else {
+      alert("채팅을 입력해주세요");
+    }
+  });
+
+  document.querySelector("#gif").addEventListener("change", (e) => {
+    const formData = new FormData();
+    formData.append("gif", e.target.files[0]);
+    axios
+      .post("/room/{{room._id}}/gif", formData)
+      .then(() => {
+        e.target.file = null;
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  });
+</script>
+{% endblock %}

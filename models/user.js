@@ -10,7 +10,7 @@ module.exports = class User extends Sequelize.Model {
           unique: true,
         },
         nick: {
-          type: Sequelize.STRING(!5),
+          type: Sequelize.STRING(15),
           allowNull: false,
         },
         password: {
@@ -50,6 +50,18 @@ module.exports = class User extends Sequelize.Model {
       as: "Followings",
       through: "Follow",
     });
+    /**
+     * postId라는 외래키값을 이용해서 받아올 것은
+     */
+    db.User.belongsToMany(db.Post, {
+      through: "PostLoveUser",
+      foreignKey: "userId",
+      as: "LovedPostList",
+    });
+
+    db.User.hasMany(db.Room);
+
+    db.User.hasMany(db.Chat);
   }
 };
 

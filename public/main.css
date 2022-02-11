@@ -20,6 +20,7 @@ body {
   line-height: 37px;
   vertical-align: top;
   font-size: 12px;
+  margin-left: 10px;
 }
 input[type="text"],
 input[type="email"],
@@ -33,6 +34,11 @@ textarea {
 .container {
   width: 100%;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  align-items: center;
 }
 @media screen and (min-width: 800px) {
   .container {
@@ -41,6 +47,7 @@ textarea {
   }
 }
 .input-group {
+  width: 100%;
   margin-bottom: 15px;
 }
 .input-group label {
@@ -51,9 +58,6 @@ textarea {
   width: 70%;
 }
 .half {
-  float: left;
-  width: 50%;
-  margin: 10px 0;
 }
 #join {
   float: right;
@@ -64,12 +68,12 @@ textarea {
   vertical-align: top;
   margin: 10px 0;
 }
-@media screen and (min-width: 800px) {
+/* @media screen and (min-width: 800px) {
   .profile-wrap {
     width: 290px;
     margin-bottom: 0;
   }
-}
+} */
 .profile {
   text-align: left;
   padding: 10px;
@@ -81,6 +85,7 @@ textarea {
 .user-name {
   font-weight: bold;
   font-size: 18px;
+  text-align: center;
 }
 .count {
   font-weight: bold;
@@ -93,12 +98,15 @@ textarea {
   display: inline-block;
   border-radius: 4px;
   vertical-align: top;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
-@media screen and (min-width: 800px) {
+/* @media screen and (min-width: 800px) {
   .timeline {
     width: 500px;
   }
-}
+} */
 #twit-form {
   border-bottom: 1px solid silver;
   padding: 10px;
@@ -153,6 +161,16 @@ textarea {
   font-size: 12px;
   cursor: pointer;
 }
+
+.twit-delete {
+  padding: 1px 5px;
+  background: #fff;
+  border: 1px solid silver;
+  border-radius: 5px;
+  color: crimson;
+  font-size: 12px;
+  cursor: pointer;
+}
 .twit-img {
   text-align: center;
 }
@@ -171,8 +189,126 @@ textarea {
   text-align: center;
 }
 #hashtag-form {
+  margin: 20px;
   text-align: right;
 }
 footer {
   text-align: center;
+}
+
+#heart-icon {
+  font-size: 28px;
+}
+
+#heart-div {
+  position: relative;
+  left: -20px;
+  bottom: -20px;
+}
+
+#heart-icon:hover {
+  color: red;
+}
+
+.blackHeart {
+  color: rgb(0, 0, 0);
+}
+
+.redHeart {
+  color: rgb(255, 0, 0);
+}
+
+.header-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.followerfollowing-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+.btn {
+  margin-left: 10px;
+}
+
+.profileEdit {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+#big-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+}
+
+#emailProfileEdit {
+  width: 80%;
+}
+#nickProfileEdit {
+  width: 80%;
+}
+
+#editInfoSubmitContainer {
+  display: flex;
+  flex-direction: row;
+}
+
+fieldset {
+  width: 100%;
+  height: 800px;
+}
+
+#chat-list {
+  overflow: auto;
+  font-size: large;
+  font-weight: 700;
+  height: 760px;
+}
+
+#chat-list > div > div:last-child {
+  background-color: yellow;
+  display: inline-block;
+}
+
+#chat-list div[class="other"] {
+  text-align: left;
+}
+
+div[class="system"] {
+  text-align: center;
+}
+#chat-list div[class="mine"] {
+  text-align: right;
+}
+
+#chatcontainer {
+  width: 100%;
+}
+
+#gif {
+  display: none;
+}
+
+label[for="gif"] {
+  cursor: pointer;
+  padding: 5px;
+}
+
+#chat-form {
+  border-width: 2px;
+  border-style: groove;
+  border-color: threedface;
+  padding: 4px;
+  text-align: right;
+}
+
+#chat-form [type="submit"] {
+  height: 30px;
 }

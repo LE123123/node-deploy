@@ -4,6 +4,8 @@ const config = require("../config/config")[env];
 const User = require("./user");
 const Post = require("./post");
 const Hashtag = require("./hashtag");
+const Room = require("./room");
+const Chat = require("./chat");
 
 const db = {};
 const sequelize = new Sequelize(
@@ -17,16 +19,23 @@ db.sequelize = sequelize;
 db.User = User;
 db.Post = Post;
 db.Hashtag = Hashtag;
+db.Room = Room;
+db.Chat = Chat;
 
 User.init(sequelize);
 Post.init(sequelize);
 Hashtag.init(sequelize);
+Room.init(sequelize);
+Chat.init(sequelize);
 
 /*
   각 모델 간의 관계를 associate 함수 안에 저장해야 한다.
 */
+
 User.associate(db);
 Post.associate(db);
 Hashtag.associate(db);
+Room.associate(db);
+Chat.associate(db);
 
 module.exports = db;

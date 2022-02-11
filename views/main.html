@@ -30,18 +30,21 @@
   </div>
   {% endif %}
   <div class="twits">
+  <!-- GET /hashtag를 하였는데 기본적으로 GET요청은 쿼리스트링으로 해당 폼 데이터가 날라가서 서버에서 쿼리스트링으로 손쉽게 처리해줄 수 있다.-->
     <form id="hashtag-form" action="/hashtag" method="GET">
       <input type="text" name="hashtag" placeholder="태그 검색 하세요" />
       <button class="btn">검색</button>
     </form>
     <!--twit.id에 해당 twit의 아이디가 존재 할 것이다.-->
     {% for twit in twits %}
+
+    <!-- 트윗 div -->
     <div class="twit">
       <input type="hidden" value="{{twit.User.id}}" class="twit-user-id" />
       <input type="hidden" value="{{twit.id}}" class="twit-id" />
       <div class="twit-author">{{twit.User.nick}}</div>
       {% if user.id === twit.User.id %}
-      <button class="twit-delete twit-follow">삭제하기</button>
+      <button class="twit-delete">삭제하기</button>
       {% endif %}
       <!-- followerIdList에 해당 twit의 유저 id가 없고 자신이 올린 트윗이 아니라면 팔로우 하기 라는 버튼을 보여준다-->
       {% if not followerIdList.includes(twit.User.id) and twit.User.id !== user.id %}
@@ -50,100 +53,168 @@
 
       <!--또한 twit.content도 보여준다 -->
       <div class="twit-content">{{twit.content}}</div>
+      
       {% if twit.img %}
-      <div class="twit-img">
-        <img
-          src="{{twit.img}}"
-          alt="섬네일"
-          onerror="this.src = this.src.replace(/\/thumb\//, '/original/');"
-          crossorigin
-        />
-      </div>
+        <div class="twit-img">
+          <img
+            src="{{twit.img}}"
+            alt="섬네일"
+            onerror="this.src = this.src.replace(/\/thumb\//, '/original/');"
+            crossorigin
+          />
+        </div>
       {% endif %}
-    </div>
-    {% endfor %}
-  </div>
-</div>
-{% endblock %}
 
-<!-- script가 존재하는 곳 -->
-{% block script %}
-<script>
-  if (document.getElementById("img")) {
-    /**
-     * id="img"인 dom객체를 찾아서 만약 이 객체가 바뀌게 되면 POST /post/img를 호출하게 된다.
-     *
-     */
-    document.getElementById("img").addEventListener("change", function (e) {
-      const formData = new FormData();
-      console.log(this, this.files);
-      formData.append("img", this.files[0]);
-      axios
-        .post("/post/img", formData)
-        /**
-         * formData에
-         * img 으로 fileData를 집어 넣어 준다.
-         * 이렇게 전송된 fileData는 POST /post/img에서 처리해 주어
-         * req.file에 저장해 준다.
-         */
-        .then((res) => {
-          document.getElementById("img-url").value = res.data.url;
+      <!--좋아요를 누르는 버튼 TODO: 자신의 게시물에는 하트가 없게 처리해주어야 한다. 또한 로그인창에서도 없애야 한다-->
+        {% if user %}
+          {% if user.id !== twit.User.id %}
+            <div id="heart-div">
+              <i class="fa fa-heart blackHeart" id="heart-icon"></i>
+            </div>
+          {% endif %}
+        {% endif %}
+      </div>
+    {% endfor %}
+      </div>
+    </div>
+    
+    <div class="postLovedList">
+      {% for post in postLovedList %}
+        <input type="hidden" class="checkerPostLovedList" value="{{post}}" >
+      {% endfor %}
+    </div>
+
+    {% endblock %}
+
+    <!-- script가 존재하는 곳 -->
+    {% block script %}
+    <script>
+    /*
+    * main.html의 DOM객체들이 랜더링 다 될 떄 실행된다
+    * 각각의 twit을 모두 한번씩 다 돌면서 twit의 User를 모두 다 불러 오는데
+    * 현재 로그인 되어있는 유저가 없다면 하트를 검은색으로 하고 로그인되어 있는 유저가 있다면
+    * 그냥 빨간색으로 유지시켜 준다.
+    */
+    
+      window.addEventListener('load', () => {
           /**
-           * 만약에 url에 해당하는 resizing 경로가 없다면
-           * res.data.originalUrl으로 s3에 처음에 저장되는 경로를 써준다
-           * < s3 /thumb에 저장되기 전에는 /original에 저장된 이미지를 보여준다. >
-           */
-          document.getElementById("img-preview").src = res.data.originalUrl;
-          document.getElementById("img-preview").style.display = "inline";
-        })
-        .catch((err) => {
-          console.error(err);
+          * 이는 해당 유저를 불러와서 LoveUserList에 해당 유저가 있는지 순회하면서
+          * 확인해서 하트를 검은색으로 할지 빨간색으로 할 지 하면 됨.
+          */
+          const postLovedListDiv = document.querySelectorAll('.checkerPostLovedList');
+          console.log(postLovedListDiv)
+          let count = 0;
+          for(eachPost of postLovedListDiv) {
+            if(eachPost.value) {
+              /**
+              * 만약 좋아요를 누르지 않은 상태라면 id에 blackHeart가 있거나 heart-icon 하나뿐인 경우이여야 한다.
+              * 어차피 기본이 blackHeart이기 때문에 이를 삭제하고 redHeart를 추가해주는 작업을 한다.
+              */
+              document.querySelectorAll('#heart-icon')[count].classList.remove('blackHeart');
+              document.querySelectorAll('#heart-icon')[count].classList.add('redHeart');
+              count += 1;
+            }
+          }
+        })    
+
+      document.querySelectorAll('#heart-div').forEach((tag) => {
+        const twitId = tag.parentNode.querySelector(".twit-id").value;
+        tag.addEventListener('click', async () => {
+          /**
+          * 만약 classList에 'redHeart'가 있다면 좋아요 취소를 해야하고
+          * 만약 'blackHeart'가 있다면 좋아요를 진행하는 행동을 해야 한다.
+          */
+          if(tag.querySelector('#heart-icon').classList.contains('blackHeart')) {
+            if(confirm('해당 게시물에 좋아요를 누르시겠습니까?')) {
+              await axios.post(`/post/${twitId}/love`);
+              location.reload();
+            }
+          } else {
+            if(confirm('해당 게시물의 좋아요를 취소하시겠습니까?')) {
+              await axios.post(`/post/${twitId}/deleteLove`);
+              location.reload();
+            }
+          }
         });
-    });
-  }
-  /**
-   * 팔로우하기 버튼을 클릭
-   */
-  document.querySelectorAll(".twit-follow").forEach(function (tag) {
-    tag.addEventListener("click", function () {
-      /* 현재 사용자의 id를 가리키는 dom객체 */
-      const myId = document.querySelector("#my-id");
-      if (myId) {
-        /* tag의 부모노드로 올라가서 각각 twit ( post )의 userid를 저장한다. */
-        const userId = tag.parentNode.querySelector(".twit-user-id").value;
-        /* 당연히 팔로우 하고자 하는 상대방과 id가 달라야만 진행될 것이다. */
-        if (userId !== myId.value) {
-          if (confirm("팔로잉하시겠습니까?")) {
+      });
+
+      if (document.getElementById("img")) {
+        /**
+         * id="img"인 dom객체를 찾아서 만약 이 객체가 바뀌게 되면 POST /post/img를 호출하게 된다.
+         *
+         */
+        document.getElementById("img").addEventListener("change", function (e) {
+          const formData = new FormData();
+          console.log(this, this.files);
+          formData.append("img", this.files[0]);
+          axios
+            .post("/post/img", formData)
+            /**
+             * formData에
+             * img 으로 fileData를 집어 넣어 준다.
+             * 이렇게 전송된 fileData는 POST /post/img에서 처리해 주어
+             * req.file에 저장해 준다.
+             */
+            .then((res) => {
+              document.getElementById("img-url").value = res.data.url;
+              /**
+               * 만약에 url에 해당하는 resizing 경로가 없다면
+               * res.data.originalUrl으로 s3에 처음에 저장되는 경로를 써준다
+               * < s3 /thumb에 저장되기 전에는 /original에 저장된 이미지를 보여준다. >
+               */
+              document.getElementById("img-preview").src = res.data.originalUrl;
+              document.getElementById("img-preview").style.display = "inline";
+            })
+            .catch((err) => {
+              console.error(err);
+            });
+        });
+      }
+      /**
+       * 팔로우하기 버튼을 클릭
+       */
+      document.querySelectorAll(".twit-follow").forEach(function (tag) {
+        tag.addEventListener("click", function () {
+          /* 현재 사용자의 id를 가리키는 dom객체 */
+          const myId = document.querySelector("#my-id");
+          if (myId) {
+            /* tag의 부모노드로 올라가서 각각 twit ( post )의 userid를 저장한다. */
+            const userId = tag.parentNode.querySelector(".twit-user-id").value;
+            /* 당연히 팔로우 하고자 하는 상대방과 id가 달라야만 진행될 것이다. */
+            if (userId !== myId.value) {
+              if (confirm("팔로잉하시겠습니까?")) {
+                axios
+                  /* POST /user/userId/follow 진행 */
+                  .post(`/user/${userId}/follow`)
+                  .then(() => {
+                    location.reload();
+                  })
+                  .catch((err) => {
+                    console.error(err);
+                  });
+              }
+            }
+          }
+        });
+      });
+      document.querySelectorAll(".twit-delete").forEach(function (tag) {
+        tag.addEventListener("click", function () {
+          /**
+           * twitId에 해당 twit의 아이디를 가져온다
+           * => 그 후 삭제하는 과정을 거쳐준다.
+           */
+          const twitId = tag.parentNode.querySelector(".twit-id").value;
+          if (confirm("삭제하시겠습니까?")) {
             axios
-              /* POST /user/userId/follow 진행 */
-              .post(`/user/${userId}/follow`)
-              .then(() => {
-                location.reload();
-              })
+              .delete(`/post/${twitId}/delete`)
+              .then(() => location.reload())
               .catch((err) => {
                 console.error(err);
               });
           }
-        }
-      }
-    });
-  });
-  document.querySelectorAll(".twit-delete").forEach(function (tag) {
-    tag.addEventListener("click", function () {
-      /**
-       * twitId에 해당 twit의 아이디를 가져온다
-       * => 그 후 삭제하는 과정을 거쳐준다.
-       */
-      const twitId = tag.parentNode.querySelector(".twit-id").value;
-      if (confirm("삭제하시겠습니까?")) {
-        axios
-          .delete(`/post/${twitId}/delete`)
-          .then(() => location.reload())
-          .catch((err) => {
-            console.error(err);
-          });
-      }
-    });
-  });
-</script>
-{% endblock %}
+        });
+      });
+    </script>
+    {% endblock %}
+  </div>
+</div>

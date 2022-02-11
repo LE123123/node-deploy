@@ -2,7 +2,7 @@ const passport = require("passport");
 const local = require("./localStrategy");
 const kakao = require("./kakaoStrategy");
 const User = require("../models/user");
-
+let tokenUser = [];
 /**
  * In this code, only the user ID is serialized to the session
  * keeping the amount of data stored within the session small
@@ -16,7 +16,7 @@ module.exports = () => {
         정하는 메서드입니다. 매개변수로 user를 받고 나서, done함수에 두번째 인수로 user.id를 넘기고 있습니다.
     */
   passport.serializeUser((data, done) => {
-    console.log("serializeUser", data);
+    // console.log("serializeUser", data);
     done(null, { id: data.user.id, accessToken: data.accessToken });
   });
 
@@ -30,30 +30,39 @@ module.exports = () => {
    * req.session이 있다면 이 session id를 바탕으로 유저를 찾아서 req.user에 넣어 준다.
    */
   passport.deserializeUser((transUser, done) => {
-    console.log("deserializeUser", transUser);
-    User.findOne({
-      where: { id: transUser.id },
-      include: [
-        { model: User, attributes: ["id", "nick"], as: "Followers" },
-        {
-          model: User,
-          attributes: ["id", "nick"],
-          as: "Followings",
-        },
-      ],
-    })
-      .then((user) => {
-        console.log("deserializeUser", user);
-        // follower와 follwing의 정보가 다 들어온 user객체를 받아 들여온다.
-        const tokenUser = {
-          user: user.dataValues,
-          accessToken: transUser.accessToken,
-        };
-        console.log("deserializeUser ( token )", tokenUser);
-        return done(null, tokenUser);
+    /**
+     * user배열에 transUser.id에 해당하는 값이 없다면 해당 유저가 캐슁이 되지 않은 것이다
+     * 따라서 해당 인덱스에 유저를 추가해주는 작업을 진행한다.
+     */
+    if (!tokenUser[transUser.id]) {
+      // console.log("deserializeUser", transUser);
+      User.findOne({
+        where: { id: transUser.id },
+        include: [
+          { model: User, attributes: ["id", "nick"], as: "Followers" },
+          {
+            model: User,
+            attributes: ["id", "nick"],
+            as: "Followings",
+          },
+        ],
       })
-      .catch((err) => done(err));
+        .then((user) => {
+          // console.log("deserializeUser", user);
+          // follower와 follwing의 정보가 다 들어온 user객체를 받아 들여온다.
+          tokenUser[transUser.id] = {
+            user: user.dataValues,
+            accessToken: transUser.accessToken,
+          };
+          // console.log("deserializeUser ( token )", tokenUser);
+          return done(null, tokenUser[transUser.id]);
+        })
+        .catch((err) => done(err));
+    } else {
+      done(null, tokenUser[transUser.id]);
+    }
   });
+
   /*
     처음 로그인 할때만 serializeUser가 실행된다.
     이는 req.session에 사용자 아이디를 저장한다.

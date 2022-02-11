@@ -28,6 +28,11 @@ module.exports = class Post extends Sequelize.Model {
     /* User 모델의 id를 가리키는 UserId칼럼을 추가한다. */
     db.Post.belongsTo(db.User);
     db.Post.belongsToMany(db.Hashtag, { through: "PostHashtag" });
+    db.Post.belongsToMany(db.User, {
+      through: "PostLoveUser",
+      foreignKey: "postId",
+      as: "UserList",
+    });
   }
 };
 
